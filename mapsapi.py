@@ -324,7 +324,7 @@ def processMethods(obj, node):
 					target["prototype"][fname]['!doc'] = descr
 
 def processProperties(obj, node):
-	print obj
+	print (obj)
 	target = getObject(obj)
 	for child in node.childNodes:
 		if child.tagName == 'tbody':
@@ -522,7 +522,7 @@ for subpath in docs_ref_paths:
 									wrapper = n3
 									break
 
-	print wrapper
+	print (wrapper)
 
 	if wrapper is not None:
 		for node in wrapper.childNodes:
@@ -535,12 +535,20 @@ for subpath in docs_ref_paths:
 			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
 				processOneRefObjectTables(node)
 
-str_json = json.dumps(data_struc, sort_keys=True, indent=4, separators=(',', ': '))
+#str_json = json.dumps(data_struc, sort_keys=True, indent=4, separators=(',', ': '))
 
 #print l_namespaces
 
+indentation=2
+newline='\n'
+lines = []
+lines.append('declare namespace google.maps {')
+lines.append('}')
+
+str_dts = newline.join(lines) + newline
+
 # Open a file
-fo = open("_googlemapsjsv3.json", "w")
-fo.write(str_json);
+fo = open("_googlemapsjsv3.d.ts", "w")
+fo.write(str_dts);
 # Close the file
 fo.close()
