@@ -11,7 +11,7 @@ def collect_text(node):
 			s += collect_text(child_node)
 	return s.replace(u'\u00a0','')
 
-def processH2(node, data, classes, objects, subpath):
+def processH2(node, data, classes, objects, enums, subpath):
 	#print "Processing H2"
 	path = ''
 	obj = ''
@@ -58,7 +58,7 @@ def processH2(node, data, classes, objects, subpath):
 				target = target[o]
 			target["!url"] = docs_ref + subpath + "#" + node.getAttribute("id")
 
-def processP(node, data, classes, objects, subpath):
+def processP(node, data, classes, objects, enums, subpath):
 	path = ''
 	obj = ''
 	obj_type = ''
@@ -89,17 +89,7 @@ def processP(node, data, classes, objects, subpath):
 				target = target[o]
 			target["!url"] = docs_ref + subpath + "#" + obj
 			target["prototype"] = dict()
-			#target["!type"] = '?'
-		elif 'object' in obj_type:
-			objects.append(obj)
-			target = data['!define']
-			for o in arr_obj:
-				if not o in target:
-					target[o] = dict()
-				target = target[o]
-			target["!url"] = docs_ref + subpath + "#" + obj
-			#target["!type"] = 'Object'
-		elif 'interface' in obj_type:
+		elif ('object' in obj_type) or ('interface' in obj_type):
 			objects.append(obj)
 			target = data['!define']
 			for o in arr_obj:
@@ -109,6 +99,14 @@ def processP(node, data, classes, objects, subpath):
 			target["!url"] = docs_ref + subpath + "#" + obj
 		elif 'namespace' in obj_type:
 			l_namespaces[obj] = path + '.' + obj
+			for o in arr_obj:
+				if not o in target:
+					target[o] = dict()
+				target = target[o]
+			target["!url"] = docs_ref + subpath + "#" + obj
+		elif 'constants' in obj_type:
+			enums.append(obj)
+			target = data['!enums']
 			for o in arr_obj:
 				if not o in target:
 					target[o] = dict()
@@ -456,12 +454,12 @@ def processStaticMethods(obj, node):
 					target[fname]['!type'] = resf
 					target[fname]['!doc'] = descr
 
-def processOneRefObject(node, data, classes, objects, subpath):
+def processOneRefObject(node, data, classes, objects, enums, subpath):
 	for child in node.childNodes:
 		if child.tagName == 'h2' and child.hasAttribute('id'):
-			processH2(child, data, classes, objects, subpath)
+			processH2(child, data, classes, objects, enums, subpath)
 		if child.tagName == 'p':
-			processP(child, data, classes, objects, subpath)
+			processP(child, data, classes, objects, enums, subpath)
 
 def processOneRefObjectTables(node):
 	for child in node.childNodes:
@@ -492,11 +490,13 @@ docs_ref_paths = ["map", "coordinates", "event", "control", "geometry", "marker"
 data_struc = dict()
 data_struc["!name"] = "googlemapsjsv3"
 data_struc["!define"] = dict()
+data_struc["!enums"] = dict()
 data_struc["google"] = dict()
 data_struc["google"]["maps"] = dict()
 data_struc["google"]["maps"]["version"] = "string"
 
 l_objects = list()
+l_enums = list()
 l_classes = dict()
 l_namespaces = dict()
 
@@ -507,8 +507,6 @@ for subpath in docs_ref_paths:
 
 	doc = libxml2dom.parseString(htmlSource, html=1)
 	content = doc.getElementById("gc-wrapper")
-
-	#doc.getElementsByClassName("devsite-article-body")
 
 	wrapper = None
 	for node in content.childNodes:
@@ -527,7 +525,7 @@ for subpath in docs_ref_paths:
 	if wrapper is not None:
 		for node in wrapper.childNodes:
 			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
-				processOneRefObject(node, data_struc, l_classes, l_objects, subpath)
+				processOneRefObject(node, data_struc, l_classes, l_objects, l_enums, subpath)
 
 		#print l_classes
 
@@ -535,9 +533,7 @@ for subpath in docs_ref_paths:
 			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
 				processOneRefObjectTables(node)
 
-#str_json = json.dumps(data_struc, sort_keys=True, indent=4, separators=(',', ': '))
-
-#print l_namespaces
+print (data_struc["!enums"])
 
 indentation=2
 newline='\n'
