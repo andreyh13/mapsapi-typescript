@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import urllib, json, libxml2dom, re
+import re
+from mapsapiscrapper.scrapper import GoogleMapsAPIScrapper
 
 def collect_text(node):
 	s = ""
@@ -501,35 +502,17 @@ l_classes = dict()
 l_namespaces = dict()
 
 for subpath in docs_ref_paths:
-	sock = urllib.urlopen(docs_ref + subpath)
-	htmlSource = sock.read()
-	sock.close()
+	scrapper = GoogleMapsAPIScrapper(docs_ref + subpath)
+	print (scrapper.wrapper)
 
-	doc = libxml2dom.parseString(htmlSource, html=1)
-	content = doc.getElementById("gc-wrapper")
-
-	wrapper = None
-	for node in content.childNodes:
-		if node.tagName == 'div' and node.hasAttribute('class') and node.getAttribute('class')=='devsite-main-content clearfix':
-			for n1 in node.childNodes:
-				if n1.tagName == 'article':
-					for n2 in n1.childNodes:
-						if (n2.tagName == 'div' or n2.tagName == 'article') and n2.hasAttribute('class') and n2.getAttribute('class')=='devsite-article-inner':
-							for n3 in n2.childNodes:
-								if n3.tagName == 'div' and n3.hasAttribute('itemprop') and n3.getAttribute('itemprop')=='articleBody':
-									wrapper = n3
-									break
-
-	print (wrapper)
-
-	if wrapper is not None:
-		for node in wrapper.childNodes:
+	if scrapper.wrapper is not None:
+		for node in scrapper.wrapper.childNodes:
 			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
 				processOneRefObject(node, data_struc, l_classes, l_objects, l_enums, subpath)
 
 		#print l_classes
 
-		for node in wrapper.childNodes:
+		for node in scrapper.wrapper.childNodes:
 			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
 				processOneRefObjectTables(node)
 
