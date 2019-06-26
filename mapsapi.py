@@ -2,6 +2,7 @@
 
 import re
 from mapsapiscrapper.scrapper import GoogleMapsAPIScrapper
+from mapsapiscrapper.nodescollection import GoogleMapsAPIDocNodes
 
 def collect_text(node):
 	s = ""
@@ -501,20 +502,16 @@ l_enums = list()
 l_classes = dict()
 l_namespaces = dict()
 
+nodes = GoogleMapsAPIDocNodes()
 for subpath in docs_ref_paths:
-	scrapper = GoogleMapsAPIScrapper(docs_ref + subpath)
+	scrapper = GoogleMapsAPIScrapper(docs_ref + subpath, nodes)
 	print (scrapper.wrapper)
 
-	if scrapper.wrapper is not None:
-		for node in scrapper.wrapper.childNodes:
-			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
-				processOneRefObject(node, data_struc, l_classes, l_objects, l_enums, subpath)
+for node in nodes.get_nodes():
+	processOneRefObject(node, data_struc, l_classes, l_objects, l_enums, subpath)
 
-		#print l_classes
-
-		for node in scrapper.wrapper.childNodes:
-			if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
-				processOneRefObjectTables(node)
+for node in nodes.get_nodes():
+	processOneRefObjectTables(node)
 
 print (data_struc["!enums"])
 
@@ -528,6 +525,6 @@ str_dts = newline.join(lines) + newline
 
 # Open a file
 fo = open("_googlemapsjsv3.d.ts", "w")
-fo.write(str_dts);
+fo.write(str_dts)
 # Close the file
 fo.close()

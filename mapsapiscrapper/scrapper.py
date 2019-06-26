@@ -6,15 +6,17 @@ import re
 class GoogleMapsAPIScrapper:
     '''This class is responsible for scrapping of Maps JavaScript API docs'''
 
-    def __init__(self, path):
+    def __init__(self, path, nodes):
         sock = urllib.urlopen(path)
         html_source = sock.read()
         sock.close()
         doc = libxml2dom.parseString(html_source, html=1)
         self.content = doc.getElementById("gc-wrapper")
-        self.wrapper = self.get_wrapper()
+        self.wrapper = self.__get_wrapper()
+        self.__nodes = nodes
+        self.__collect_nodes()
 
-    def get_wrapper(self):
+    def __get_wrapper(self):
         wrapper = None
         node = self.__get_child_node_first(
             self.content.childNodes, 'div', None, 'devsite-main-content clearfix')
@@ -43,3 +45,9 @@ class GoogleMapsAPIScrapper:
                 res = node
                 break
         return res
+
+    def __collect_nodes(self):
+        if self.wrapper is not None:
+            for node in self.wrapper.childNodes:
+                if node.tagName == 'div' and node.hasAttribute('itemscope') and node.hasAttribute('itemtype') and node.getAttribute('itemtype') == 'http://developers.google.com/ReferenceObject':
+                    self.__nodes.add_node(node)
